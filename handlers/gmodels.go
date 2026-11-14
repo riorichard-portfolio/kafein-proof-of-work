@@ -1,4 +1,4 @@
-package syncq
+package handlers
 
 import "time"
 
