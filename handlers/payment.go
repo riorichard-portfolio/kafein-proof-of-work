@@ -19,7 +19,7 @@ type CreatePaymentReq struct {
 type CreatePaymentQP syncq.Producer[CreatePaymentReq, struct{}]
 
 func CreatePaymentHandler(app *fiber.App, db *gorm.DB, producer CreatePaymentQP) {
-	app.Post("/api/transfer", func(c fiber.Ctx) error {
+	app.Post("/api/pay", func(c fiber.Ctx) error {
 		var req CreatePaymentReq
 		if err := c.Bind().Body(&req); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
