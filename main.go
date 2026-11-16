@@ -32,7 +32,10 @@ func main() {
 	}
 
 	paymentF := flushers.NewPaymentF(gormDB)
-	w, p := syncq.New[handlers.CreatePaymentReq, struct{}](syncq.Config{})
+	w, p := syncq.New[handlers.CreatePaymentReq, struct{}](syncq.Config{
+		QueueSize: 10000,
+		WorkerBatchSize: 1000,
+	})
 	handlers.CreatePaymentHandler(fiberApp, gormDB,p)
 	w.Run(paymentF.CreatePayment)
 	log.Fatal(fiberApp.Listen(":3000"))
