@@ -16,6 +16,13 @@ type CreatePaymentReq struct {
 	Amount    int    `json:"amount" validate:"required"`
 }
 
+type AccountBalanceResult struct {
+	AccountID                       string  `json:"account_id"`
+	ActualBalanceInDB               float64 `json:"actual_balance_in_db"`
+	TotalSuccessfulPaymentsRecorded int64   `json:"total_successful_payments_recorded"`
+	TotalSumAmountRecorded          float64 `json:"total_sum_amount_recorded"`
+}
+
 type CreatePaymentQP syncq.Producer[CreatePaymentReq, struct{}]
 
 func CreatePaymentHandler(app *fiber.App, db *gorm.DB, producer CreatePaymentQP) {
@@ -63,5 +70,35 @@ func CreatePaymentHandler(app *fiber.App, db *gorm.DB, producer CreatePaymentQP)
 		}
 
 		return c.JSON(fiber.Map{"status": "success_baseline"})
+	})
+}
+
+func FindAccBalanceHandler(app *fiber.App, db *gorm.DB) {
+	app.Get("/api/acc/:id", func(c fiber.Ctx) error {
+		accID := c.Params("id")
+
+		var result AccountBalanceResult
+
+		err := db.WithContext(c.Context()).Raw(`
+			SELECT
+				a.id AS account_id,
+				a.balance AS actual_balance_in_db,
+				COUNT(p.id) AS total_successful_payments_recorded,
+				COALESCE(SUM(p.amount), 0) AS total_sum_amount_recorded
+			FROM account_gorms a
+			LEFT JOIN payment_gorms p ON p.account_id::uuid = a.id
+			WHERE a.id = ?
+			GROUP BY a.id, a.balance;
+		`, accID).Scan(&result).Error
+
+		if err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		}
+
+		if result.AccountID == "" {
+			return fiber.NewError(fiber.StatusNotFound, "account not found")
+		}
+
+		return c.JSON(result)
 	})
 }

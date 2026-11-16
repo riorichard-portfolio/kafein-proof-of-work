@@ -35,7 +35,8 @@ func main() {
 	w, p := syncq.New[handlers.CreatePaymentReq, struct{}](syncq.Config{
 		WorkerBatchSize: 300,
 	})
-	handlers.CreatePaymentHandler(fiberApp, gormDB,p)
+	handlers.CreatePaymentHandler(fiberApp, gormDB, p)
+	handlers.FindAccBalanceHandler(fiberApp, gormDB)
 	w.Run(paymentF.CreatePayment)
 	log.Fatal(fiberApp.Listen(":3000"))
 }
