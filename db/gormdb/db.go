@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"kafein-proof-of-work/db/config"
+	h "kafein-proof-of-work/handlers"
 
 	"github.com/cockroachdb/errors"
 	"gorm.io/driver/postgres"
@@ -35,5 +36,36 @@ func NewDB(
 		return nil, errors.Wrap(err, "failed to ping DB")
 	}
 
+	err = db.AutoMigrate(&h.AccountGorm{}, &h.PaymentGorm{})
+	if err != nil {
+		return nil, errors.Wrap(err,"failed to auto migrate db")
+	}
+	err = seedAccounts(db)
+	if err != nil {
+		return nil, errors.Wrap(err,"failed to seed db")
+	}
+
 	return db, nil
+}
+
+func seedAccounts(db *gorm.DB) error {
+	var count int64
+	db.Model(&h.AccountGorm{}).Count(&count)
+	if count > 0 {
+		return nil
+	}
+
+	hotAccountID := "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11" // UUID static
+
+	hotAccount := h.AccountGorm{
+		ID:      hotAccountID,
+		Name:    "Merchant Hot-Row Utama",
+		Balance: 0, // init 0 balance
+	}
+
+	if err := db.Create(&hotAccount).Error; err != nil {
+		return errors.Wrap(err, "failed to seed account")
+	}
+
+	return nil
 }
