@@ -38,7 +38,7 @@ func CreatePaymentHandler(app *fiber.App, db *gorm.DB, producer CreatePaymentQP)
 
 			_, err := producer.AddTaskQ(ctx, req)
 			if err != nil {
-				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+				return c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{"error": err.Error()})
 			}
 			return c.JSON(fiber.Map{"status": "processed_via_syncq"})
 		}

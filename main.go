@@ -34,6 +34,9 @@ func main() {
 	paymentF := flushers.NewPaymentF(gormDB)
 	w, p := syncq.New[handlers.CreatePaymentReq, struct{}](syncq.Config{
 		WorkerBatchSize: 300,
+
+		// WorkerBatchSize: 5,
+		// QueueSize: 5, // for backpreassure testing (load shedding)
 	})
 	handlers.CreatePaymentHandler(fiberApp, gormDB, p)
 	handlers.FindAccBalanceHandler(fiberApp, gormDB)
