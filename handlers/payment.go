@@ -44,9 +44,13 @@ func CreatePaymentHandler(app *fiber.App, db *gorm.DB, producer CreatePaymentQP)
 		}
 
 		// Baseline direct GORM transaction
+		nowTime := time.Now()
 		err := db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 			if err := tx.Create(&PaymentGorm{
 				ID: uuid.NewString(),
+				AccountID: req.AccountID,
+				Amount: req.Amount,
+				CreatedAt: nowTime,
 			}).Error; err != nil {
 				return err
 			}
